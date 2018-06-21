@@ -1,0 +1,124 @@
+<html><head><style>
+#colors{position:absolute;right:5vmin;top:5vmin;}
+#colors > color{width:20vmin;height:20vmin;display:inline-block;}
+#msgs{font-weight:900}
+#msgs > li{font-size:9vmin;margin-left:9vmin;}
+h1{font-size:14vmin;margin:0;}
+</style></head>
+<body style="width:100%;height:100%;overflow:hidden;">
+  <div id="colors">
+    <color id="0"></color><color id="1"></color><color id="2"></color><color id="3"></color><br>
+    <color id="4"></color><color id="5"></color><color id="6"></color><color id="7"></color>
+  </div>
+  <h1 style="position:absolute;bottom:1vmin">BUZZ IT!</h1>
+  <div id="rel" style="display:none;"><h1><a href="/">Disconnected: reload?</a></h1></div>
+  <ul id="msgs"></ul>
+  <script type="text/javascript">
+    window.onload = ()=>{
+      (()=>{
+        var master = false,
+            buzz = false,
+            buzz_order = [],
+            msgs = document.getElementById('msgs'),
+            names = [],
+            teams = [],
+            client_state = {},
+            spoken_numbers = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Last"];
+            colors = ["green", "#bc0e0e", "darkblue", "#600060", "yellow", "#d88200", "#04b9d7", "#b600b6"];
+        var proto = location.protocol === 'https:' ? 'wss' : 'ws'
+        if(localStorage.getItem("secret")){
+          console.log(localStorage.getItem("secret"))
+          var ws = new WebSocket(proto +'://'+ window.location.host +"/"+ localStorage.getItem("secret"));
+        }else{
+          var ws = new WebSocket(proto +'://'+ window.location.host);
+        }
+        ws.onclose = ()=>{document.getElementById("rel").style["display"] = ""}
+        ws.onmessage = (m)=>{ console.log('websocket msg: ' + m.data)
+          if(m.data=="Hello Master"){
+            master=true;
+            document.getElementById("colors").remove()
+          }else if(m.data=="master left"){
+            buzz=true;
+            alert(m.data)
+          }else if(m.data=="master's back"){
+            ws.send("name: "+client_state["name"])
+            ws.send("team: "+client_state["team"])
+            buzz=false;
+            document.querySelector("body").style["background"]=""
+          }else if(m.data=="send team"){
+            ws.send("team: "+client_state["team"])
+            buzz=false;
+            document.querySelector("body").style["background"]=""
+          }else if(m.data=="Hello Client"){
+            master=false;
+            var name = prompt("Name?")
+            ws.send("name: " + name);
+            client_state["name"] = name
+          }else if(m.data=="clear"){
+            buzz=false;
+            document.querySelector("body").style["background"]=""
+          }else if(master && m.data.match(/^secret: /)){
+            localStorage.setItem("secret", m.data.substr(8))
+          }else if(master && m.data.match(/^client leave: /)){
+            console.log(m.data)
+          }else if(master && m.data.match(/^team \d: \d+$/)){
+            var id = parseInt(m.data.substr(8), 10)
+            teams[id] = parseInt(m.data.substr(5), 10)
+            console.log("playa ("+ id + "): is now in team "+ teams[id])
+          }else if(master && m.data.match(/^buzz: \d+$/)){
+            var id = parseInt(m.data.substr(6), 10)
+            if(buzz_order.indexOf(id)!=-1){return}
+            var li = document.createElement("li")
+            if(names[id] === undefined){names[id]=""}
+            if(colors[teams[id]] === undefined){
+              console.log("no team for "+id);
+              ws.send(id+" send team");
+              return
+            }
+            li.innerText = "("+ id +") " + spoken_numbers[buzz_order.length%spoken_numbers.length] + names[id]
+            li.style["color"] = colors[teams[id]]
+            msgs.appendChild(li)
+            buzz_order.unshift(id)
+          }else if(master && m.data.match(/^name \d+:/)){
+            var id = parseInt(m.data.substr(5), 10)
+            names[id] = m.data.split(":")[1]
+            console.log("new playa:"+ names[id])
+          }
+        }
+        
+        var buzz_fn = (e)=>{
+          if(e.target.tagName == "COLOR"){return}
+          if(master){
+            if(e && e.code){
+              if(e.code == "Space"){
+                buzz_order.pop()
+                if(msgs.children[0]){msgs.children[0].remove()}
+                if(buzz_order === []){ws.send("clear")}
+              }else{
+                ws.send("clear")
+                buzz_order = []
+                msgs.innerHTML = ""
+              }
+            }
+          }else{
+            if(!buzz && !!client_state["team"]){
+              ws.send("buzz");
+              buzz=true;
+              document.querySelector("body").style["background"]="lightgray"}
+          }
+        }
+        document.body.addEventListener("touchstart", buzz_fn)
+        document.body.addEventListener("mousedown", buzz_fn)
+        document.body.addEventListener("keydown", buzz_fn)
+
+        document.querySelectorAll("#colors > color").forEach((e)=>{
+          e.style["background"] = colors[parseInt(e.id)]
+          e.onclick = ()=>{
+            client_state["team"] = e.id
+            ws.send("team: "+e.id)
+          }
+        })
+      })();
+    }
+  </script>
+</body></html>
