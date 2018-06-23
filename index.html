@@ -121,6 +121,7 @@ h1{font-size:14vmin;margin:0;}
             ws.send("team: "+e.id)
           }
         })
+       window.setInterval(()=>{ws.send("keepalive")},2000)
       })();
     }
   </script>
