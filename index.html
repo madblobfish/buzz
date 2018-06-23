@@ -106,7 +106,8 @@ h1{font-size:14vmin;margin:0;}
             if(!buzz && !!client_state["team"]){
               ws.send("buzz");
               buzz=true;
-              document.querySelector("body").style["background"]="lightgray"}
+              document.querySelector("body").style["background"]="lightgray"
+            }
           }
         }
         document.body.addEventListener("touchstart", buzz_fn)
