@@ -103,10 +103,12 @@ h1{font-size:14vmin;margin:0;}
               }
             }
           }else{
-            if(!buzz && !!client_state["team"]){
+            if(!!client_state["team"]){
               ws.send("buzz");
               buzz=true;
               document.querySelector("body").style["background"]="lightgray"
+            }else{
+              alert("select a team")
             }
           }
         }
