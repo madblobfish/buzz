@@ -26,13 +26,7 @@ h1{font-size:14vmin;margin:0;}
             client_state = {},
             spoken_numbers = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Last"];
             colors = ["green", "#bc0e0e", "darkblue", "#600060", "yellow", "#d88200", "#04b9d7", "#b600b6"];
-        var proto = location.protocol === 'https:' ? 'wss' : 'ws'
-        if(s.getItem("secret")){
-          console.log(s.getItem("secret"))
-          var ws = new WebSocket(proto +'://'+ window.location.host +"/"+ s.getItem("secret"));
-        }else{
-          var ws = new WebSocket(proto +'://'+ window.location.host);
-        }
+        var ws = new WebSocket(('https:' ? 'wss' : 'ws') +'://'+ window.location.host);
         ws.onclose = ()=>{document.getElementById("rel").style["display"] = ""}
         ws.onmessage = (m)=>{ console.log('websocket msg: ' + m.data)
           if(m.data=="Hello Master"){
@@ -54,9 +48,6 @@ h1{font-size:14vmin;margin:0;}
             client_state["name"] = name
           }else if(m.data=="clear"){
             document.querySelector("body").style["background"]=""
-          }else if(master && m.data.match(/^secret: /)){
-            s.setItem("secret", m.data.substr(8))
-            s.getItem("secret")
           }else if(master && m.data.match(/^client leave: /)){
             console.log(m.data)
           }else if(master && m.data.match(/^team \d: \d+$/)){

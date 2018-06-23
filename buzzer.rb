@@ -3,41 +3,19 @@ require 'sinatra-websocket'
 
 set :server, 'thin'
 set :clients, []
-set :secrets, []
 set :master, nil
-set :master_secret, nil
 
-get '/:secret?' do
+get '/' do
   return File.read("./index.html") if !request.websocket?
   request.websocket do |ws|
     ws.onopen do
-      if params['secret']
-        puts "OMG #{params['secret']}"
-        if params['secret'] == settings.master_secret
-          puts "master"
-          settings.master = ws
-          ws.send("Hello Master")
-          EM.next_tick{ settings.clients.compact.each{|s| s.send("master's back") } }
-        elsif settings.secrets.include?(params['secret'])
-          puts "client"
-          idx = settings.secrets.find_index(params['secret'])
-          settings.clients[idx] = ws
-          ws.send("Hello Client")
-        end
-      end
-      if ws != settings.master && !settings.clients.include?(ws)
-        if settings.master
-          ws.send("Hello Client")
-          settings.clients << ws
-          settings.secrets << File.read("/proc/sys/kernel/random/uuid").chop
-          ws.send("secret: "+ settings.secrets.last)
-          settings.master.send("client join: " + settings.clients.find_index(ws).to_s)
-        else # first one is master
-          settings.master = ws
-          settings.master_secret = "m" + File.read("/proc/sys/kernel/random/uuid").chop
-          ws.send("secret: "+ settings.master_secret)
-          ws.send("Hello Master")
-        end
+      if settings.master
+        ws.send("Hello Client")
+        settings.clients << ws
+        settings.master.send("client join: " + settings.clients.find_index(ws).to_s)
+      else # first one is master
+        settings.master = ws
+        ws.send("Hello Master")
       end
     end
     ws.onmessage do |msg|
