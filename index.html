@@ -4,6 +4,7 @@ html,body{margin:0;padding:0;overflow:hidden;width:100%;height:100%}
 #colors > color{width:20vmin;height:20vmin;display:inline-block;}
 #msgs{font-weight:900}
 #msgs > li{font-size:9vmin;margin-left:9vmin;}
+color.selected{border: 4px solid black;box-sizing:border-box;}
 h1{font-size:14vmin;margin:0;}
 </style></head>
 <body>
@@ -107,6 +108,8 @@ h1{font-size:14vmin;margin:0;}
           e.onclick = ()=>{
             client_state["team"] = e.id
             ws.send("team: "+e.id)
+            document.querySelectorAll("color.selected").forEach((e)=>{e.classList.remove("selected")})
+            e.classList.add("selected")
           }
         })
        window.setInterval(()=>{ws.send("keepalive")},2000)
