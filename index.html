@@ -2,9 +2,10 @@
 html,body{margin:0;padding:0;overflow:hidden;width:100%;height:100%}
 #colors{position:absolute;right:5vmin;top:5vmin;}
 #colors > color{width:20vmin;height:20vmin;display:inline-block;}
+#colors > color.selected{border: 2vmin solid black;box-sizing:border-box;}
+#colors > color > span{position:absolute;font-size:8vmin;margin-top:5vmin;margin-left:2vmin;}
 #msgs{font-weight:900}
 #msgs > li{font-size:9vmin;margin-left:9vmin;}
-color.selected{border: 4px solid black;box-sizing:border-box;}
 #loading span::after{content:"⍣";animation:l 0.7s infinite;}
 @keyframes l{
   000%{ content:"⍣" }010%{ content:"⍤" }020%{ content:"ӧ" }030%{ content:"⍥" }040%{ content:"⍢" }
@@ -16,8 +17,8 @@ h1{font-size:14vmin;margin:0;}
     <span>Loading<br></span>
   </div>
   <div id="colors">
-    <color id="0"></color><color id="1"></color><color id="2"></color><color id="3"></color><br>
-    <color id="4"></color><color id="5"></color><color id="6"></color><color id="7"></color>
+    <color id="0"><span>0</span></color><color id="1"><span>0</span></color><color id="2"><span>0</span></color><color id="3"><span>0</span></color><br>
+    <color id="4"><span>0</span></color><color id="5"><span>0</span></color><color id="6"><span>0</span></color><color id="7"><span>0</span></color>
   </div>
   <h1 style="position:absolute;bottom:1vmin">BUZZ IT!</h1>
   <div id="rel" style="display:none;"><h1><a href="/">Disconnected: reload?</a></h1></div>
@@ -34,13 +35,18 @@ h1{font-size:14vmin;margin:0;}
             client_state = {},
             spoken_numbers = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Last"];
             colors = ["green", "#bc0e0e", "darkblue", "#600060", "yellow", "#d88200", "#04b9d7", "#b600b6"];
-        var ws = new WebSocket(('https:' ? 'wss' : 'ws') +'://'+ window.location.host);
+        var ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') +'://'+ window.location.host);
         ws.onopen = ()=>{document.getElementById("loading").remove()}
         ws.onclose = ()=>{document.getElementById("rel").style["display"] = ""}
         ws.onmessage = (m)=>{ console.log('websocket msg: ' + m.data)
           if(m.data=="Hello Master"){
             master=true;
             document.getElementById("colors").remove()
+          }else if(m.data=="Hello Client"){
+            master=false;
+            var name = prompt("Name?")
+            ws.send("name: " + name);
+            client_state["name"] = name
           }else if(m.data=="master left"){
             alert(m.data)
           }else if(m.data=="master's back"){
@@ -50,13 +56,12 @@ h1{font-size:14vmin;margin:0;}
           }else if(m.data=="send team"){
             ws.send("team: "+client_state["team"])
             document.querySelector("body").style["background"]=""
-          }else if(m.data=="Hello Client"){
-            master=false;
-            var name = prompt("Name?")
-            ws.send("name: " + name);
-            client_state["name"] = name
           }else if(m.data=="clear"){
             document.querySelector("body").style["background"]=""
+          }else if(m.data.match(/^team num \d: \d+$/)){
+            var id = document.getElementById(parseInt(m.data.substr(9,1))).children[0]
+            id.innerText = m.data.substr(12)
+
           }else if(master && m.data.match(/^client leave: /)){
             console.log(m.data)
           }else if(master && m.data.match(/^team \d: \d+$/)){
@@ -85,7 +90,8 @@ h1{font-size:14vmin;margin:0;}
         }
         
         var buzz_fn = (e)=>{
-          if(e.target.tagName == "COLOR"){return}
+          if(e.target.tagName == "COLOR" || e.target.parentNode.tagName == "COLOR"){return}
+          if(e && e.code && (e.code == "F12" || e.code == "F5")){return}
           if(master){
             if(e && e.code){
               if(e.code == "Space"){
