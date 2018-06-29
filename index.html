@@ -127,6 +127,8 @@ h1{font-size:14vmin;margin:0;}
           }
         })
        window.setInterval(()=>{ws.send("keepalive")},2000)
+       window.addEventListener("unload", ()=>{ws.close()})
+       window.addEventListener("beforeunload", ()=>{ws.close()})
       })();
     }
   </script>
