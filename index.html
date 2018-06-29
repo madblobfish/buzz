@@ -26,8 +26,7 @@ h1{font-size:14vmin;margin:0;}
   <script type="text/javascript">
     window.onload = ()=>{
       (()=>{
-        var s = window.localStorage,
-            master = false,
+        var master = false,
             buzz_order = [],
             msgs = document.getElementById('msgs'),
             names = [],
@@ -35,9 +34,14 @@ h1{font-size:14vmin;margin:0;}
             client_state = {},
             spoken_numbers = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Last"];
             colors = ["green", "#bc0e0e", "darkblue", "#600060", "yellow", "#d88200", "#04b9d7", "#b600b6"];
+
         var ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') +'://'+ window.location.host);
         ws.onopen = ()=>{document.getElementById("loading").remove()}
         ws.onclose = ()=>{document.getElementById("rel").style["display"] = ""}
+        window.addEventListener("unload", ()=>{ws.close()})
+        window.addEventListener("beforeunload", ()=>{ws.close()})
+        window.setInterval(()=>{ws.send("keepalive")},2000)
+
         ws.onmessage = (m)=>{ console.log('websocket msg: ' + m.data)
           if(m.data=="Hello Master"){
             master=true;
@@ -126,9 +130,6 @@ h1{font-size:14vmin;margin:0;}
             e.classList.add("selected")
           }
         })
-       window.setInterval(()=>{ws.send("keepalive")},2000)
-       window.addEventListener("unload", ()=>{ws.close()})
-       window.addEventListener("beforeunload", ()=>{ws.close()})
       })();
     }
   </script>
